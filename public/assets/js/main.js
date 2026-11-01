@@ -40,3 +40,139 @@ function togglePasswordVisibility(inputId, btn) {
     }
 }
 
+/**
+ * ==========================================================================
+ * Reusable Confirmation Modal System
+ * Dùng chung cho toàn bộ các chức năng: Xóa, Khóa, Duyệt, Hủy...
+ * ==========================================================================
+ */
+let confirmModalCallback = null;
+
+/**
+ * Mở modal xác nhận với các tùy chọn linh hoạt
+ * @param {Object} options
+ *   - title: Tiêu đề modal (VD: "Xác nhận xóa tài khoản")
+ *   - message: Nội dung câu hỏi (VD: "Bạn có chắc chắn muốn xóa tài khoản <b>NV001</b>?")
+ *   - note: Ghi chú cảnh báo nghiệp vụ nhỏ màu vàng (tùy chọn)
+ *   - icon: Class icon FontAwesome (mặc định: "fa-solid fa-triangle-exclamation")
+ *   - iconColor: Màu của icon (mặc định: "#dc2626")
+ *   - btnText: Nhãn nút xác nhận (mặc định: "Xác nhận")
+ *   - btnClass: Class của nút xác nhận (mặc định: "btn btn-danger")
+ *   - btnIcon: Class icon trong nút xác nhận (mặc định: "fa-solid fa-trash-can")
+ *   - action: URL đích để submit POST (tùy chọn)
+ *   - method: Phương thức gửi (mặc định: "POST")
+ *   - inputs: Object { key: value } chứa các hidden input gửi lên server
+ *   - onConfirm: Callback function thực thi khi nhấn xác nhận (nếu không submit form)
+ */
+function openConfirmModal(options) {
+    options = options || {};
+    const modal = document.getElementById('reusableConfirmModal');
+    if (!modal) return;
+
+    const heading = document.getElementById('modalConfirmHeading');
+    const icon = document.getElementById('modalConfirmIcon');
+    const message = document.getElementById('modalConfirmMessage');
+    const note = document.getElementById('modalConfirmNote');
+    const submitBtn = document.getElementById('modalConfirmSubmitBtn');
+    const form = document.getElementById('modalConfirmForm');
+    const hiddenInputs = document.getElementById('modalConfirmHiddenInputs');
+
+    // 1. Tiêu đề & Icon
+    if (heading) heading.innerText = options.title || 'Xác nhận thao tác';
+    if (icon) {
+        icon.className = options.icon || 'fa-solid fa-triangle-exclamation';
+        icon.style.color = options.iconColor || '#dc2626';
+    }
+
+    // 2. Nội dung thông điệp
+    if (message) {
+        message.innerHTML = options.message || 'Bạn có chắc chắn muốn thực hiện hành động này?';
+    }
+
+    // 3. Ghi chú phụ
+    if (note) {
+        if (options.note) {
+            note.innerHTML = options.note;
+            note.style.display = 'block';
+        } else {
+            note.style.display = 'none';
+        }
+    }
+
+    // 4. Nút bấm xác nhận
+    if (submitBtn) {
+        submitBtn.className = options.btnClass || 'btn btn-danger';
+        const btnIcon = options.btnIcon !== undefined ? options.btnIcon : 'fa-solid fa-trash-can';
+        const btnText = options.btnText || 'Xác nhận';
+        submitBtn.innerHTML = (btnIcon ? `<i class="${btnIcon}" style="margin-right: 6px;"></i> ` : '') + `<span>${btnText}</span>`;
+    }
+
+    // 5. Cài đặt hành động (Submit Form hoặc Callback)
+    if (options.action && form && hiddenInputs) {
+        form.action = options.action;
+        form.method = options.method || 'POST';
+        hiddenInputs.innerHTML = '';
+        if (options.inputs) {
+            for (const [key, val] of Object.entries(options.inputs)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = val;
+                hiddenInputs.appendChild(input);
+            }
+        }
+        confirmModalCallback = function() {
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 6px;"></i> Đang xử lý...';
+            }
+            form.submit();
+        };
+    } else if (typeof options.onConfirm === 'function') {
+        confirmModalCallback = function() {
+            options.onConfirm();
+            closeConfirmModal();
+        };
+    } else {
+        confirmModalCallback = null;
+    }
+
+    // 6. Gán sự kiện cho nút Xác nhận
+    if (submitBtn) {
+        submitBtn.onclick = function() {
+            if (typeof confirmModalCallback === 'function') {
+                confirmModalCallback();
+            } else {
+                closeConfirmModal();
+            }
+        };
+    }
+
+    // 7. Kích hoạt hiển thị modal
+    modal.style.display = 'flex';
+    requestAnimationFrame(function() {
+        modal.classList.add('active');
+    });
+    document.body.style.overflow = 'hidden';
+}
+
+/**
+ * Đóng modal xác nhận
+ */
+function closeConfirmModal() {
+    const modal = document.getElementById('reusableConfirmModal');
+    if (!modal) return;
+    modal.classList.remove('active');
+    setTimeout(function() {
+        modal.style.display = 'none';
+        document.body.style.overflow = '';
+    }, 150);
+}
+
+// Bấm phím ESC để đóng modal
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeConfirmModal();
+    }
+});
+

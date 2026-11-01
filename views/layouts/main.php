@@ -5,7 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title ?? config('app.name')) ?></title>
-    <link rel="stylesheet" href="<?= asset('css/style.css') ?>">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- App Styles -->
+    <link rel="stylesheet" href="<?= asset('css/style.css') ?>?v=<?= time() ?>">
 </head>
 
 <body>
@@ -64,7 +67,11 @@
         <p>© <?= date('Y') ?> Trung tâm Quản lý Ký túc xá Đại học Quốc gia TP.HCM</p>
         <p class="footer-sub">Hệ thống quản lý nội trú - Kiến trúc MVC</p>
     </footer>
-    <script src="<?= asset('js/main.js') ?>"></script>
+
+    <!-- Reusable Confirmation Modal -->
+    <?php require_once dirname(__DIR__) . '/components/confirm_modal.php'; ?>
+
+    <script src="<?= asset('js/main.js') ?>?v=<?= time() ?>"></script>
 </body>
 
 </html>

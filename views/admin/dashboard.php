@@ -16,30 +16,6 @@ ob_start();
         </div>
     </div>
 
-    <!-- Thanh phím tắt nhanh các phân hệ quản trị CRUD -->
-    <div class="card" style="margin-bottom: 24px; padding: 14px 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
-        <div style="font-size: 0.85rem; font-weight: 600; color: #475569; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
-            ⚡ Phím tắt chuyển nhanh sang các chức năng quản trị:
-        </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <a href="<?= url('admin/users') ?>" class="btn btn-outline btn-sm" style="border-radius: 6px; font-weight: 500;">
-                👥 1. Cán bộ & Phân quyền
-            </a>
-            <a href="<?= url('admin/rooms') ?>" class="btn btn-outline btn-sm" style="border-radius: 6px; font-weight: 500;">
-                🏢 2. Cơ sở vật chất, Phòng & Giường
-            </a>
-            <a href="<?= url('admin/periods') ?>" class="btn btn-outline btn-sm" style="border-radius: 6px; font-weight: 500;">
-                📅 3. Đợt đăng ký & Giữ chỗ 72h
-            </a>
-            <a href="<?= url('admin/room-types') ?>" class="btn btn-outline btn-sm" style="border-radius: 6px; font-weight: 500;">
-                💰 4. Đơn giá & Loại phòng
-            </a>
-            <a href="<?= url('admin/universities') ?>" class="btn btn-outline btn-sm" style="border-radius: 6px; font-weight: 500;">
-                🎓 5. Trường Đại học liên kết
-            </a>
-        </div>
-    </div>
-
     <!-- Chỉ số toàn hệ thống -->
     <div class="grid grid-cols-4" style="gap: 18px; margin-bottom: 28px;">
         <div class="card stat-card" style="border-left: 4px solid #2563eb;">
@@ -98,10 +74,10 @@ ob_start();
                             </td>
                             <td style="text-align: right;">
                                 <a href="<?= url('admin/users') ?>" class="btn btn-outline btn-sm" style="border-radius: 6px; text-decoration: none;">
-                                    👤 Phân quyền
+                                    Phân quyền
                                 </a>
                                 <a href="<?= url('admin/users') ?>" class="btn btn-outline btn-sm" style="border-radius: 6px; text-decoration: none;">
-                                    ⚙️ Quản lý
+                                    Quản lý
                                 </a>
                             </td>
                         </tr>
@@ -143,7 +119,7 @@ ob_start();
                             <td><b><?= $c['TongGiuong'] ?></b> giường</td>
                             <td style="text-align: right;">
                                 <a href="<?= url('admin/rooms') ?>" class="btn btn-outline btn-sm" style="border-radius: 6px; text-decoration: none;">
-                                    ⚙️ Cấu hình phòng
+                                    Cấu hình phòng
                                 </a>
                             </td>
                         </tr>
@@ -181,14 +157,14 @@ ob_start();
                             <td><?= htmlspecialchars($d['NamHoc']) ?></td>
                             <td><?= $d['ThoiGianMoCong'] ?></td>
                             <td><?= $d['ThoiGianDongCong'] ?></td>
-                            <td><span class="badge badge-info">⏱️ <?= $d['SoGioGiuCho'] ?> giờ</span></td>
+                            <td><span class="badge badge-info"><?= $d['SoGioGiuCho'] ?> giờ</span></td>
                             <td><span class="badge badge-success">Đang mở</span></td>
                             <td style="text-align: right;">
                                 <a href="<?= url('admin/periods') ?>" class="btn btn-outline btn-sm" style="border-radius: 6px; text-decoration: none;">
-                                    ⚙️ Chỉnh sửa
+                                    Chỉnh sửa
                                 </a>
                                 <a href="<?= url('admin/periods') ?>" class="btn btn-outline btn-sm" style="border-radius: 6px; text-decoration: none;">
-                                    ⏱️ Quản lý đợt
+                                    Quản lý đợt
                                 </a>
                             </td>
                         </tr>
@@ -228,7 +204,7 @@ ob_start();
                             <td><?= format_money($lp['DonGiaDichVuTangThem']) ?></td>
                             <td style="text-align: right;">
                                 <a href="<?= url('admin/room-types') ?>" class="btn btn-outline btn-sm" style="border-radius: 6px; text-decoration: none;">
-                                    ✏️ Sửa giá
+                                    Sửa giá
                                 </a>
                             </td>
                         </tr>
@@ -272,7 +248,7 @@ ob_start();
                             <td><?= $t['SoNamDaoTaoChuan'] ?> năm</td>
                             <td style="text-align: right;">
                                 <a href="<?= url('admin/universities') ?>" class="btn btn-outline btn-sm" style="border-radius: 6px; text-decoration: none;">
-                                    ✏️ Sửa
+                                    Sửa
                                 </a>
                             </td>
                         </tr>
@@ -287,7 +263,7 @@ ob_start();
         <div class="card-title">
             <span>6. Nhật ký giao dịch tài chính toàn hệ thống</span>
             <button type="button" class="btn btn-outline btn-sm" style="border-radius: 6px;" onclick="alert('Xuất báo cáo tài chính toàn hệ thống ra Excel')">
-                📥 Xuất báo cáo tài chính
+                Xuất báo cáo tài chính
             </button>
         </div>
         <?php if (!empty($recentTransactions)): ?>

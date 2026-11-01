@@ -71,6 +71,10 @@ Router::post('/staff/approve-application', 'Staff\DashboardController@approveApp
 // Admin Routes
 Router::get('/admin/dashboard', 'Admin\DashboardController@index');
 Router::get('/admin/users', 'Admin\DashboardController@users');
+Router::post('/admin/users/save', 'Admin\DashboardController@saveUser');
+Router::post('/admin/users/reset-password', 'Admin\DashboardController@resetPassword');
+Router::post('/admin/users/toggle-status', 'Admin\DashboardController@toggleUserStatus');
+Router::post('/admin/users/delete', 'Admin\DashboardController@deleteUser');
 Router::get('/admin/rooms', 'Admin\DashboardController@rooms');
 Router::get('/admin/periods', 'Admin\DashboardController@periods');
 Router::get('/admin/room-types', 'Admin\DashboardController@roomTypes');

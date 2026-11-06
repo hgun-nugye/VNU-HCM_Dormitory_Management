@@ -68,26 +68,62 @@ if (!empty($availableRooms) && is_array($availableRooms)) {
 ?>
 
 <div class="landing-wrapper">
-    <!-- HERO BANNER FULL WIDTH -->
-    <div class="hero-stats-section" style="--hero-bg: url('<?= url('assets/images/img1.jpg') ?>');">
-        <div class="hero-banner">
+    <!-- HERO BANNER FULL WIDTH WITH BACKGROUND SLIDER -->
+    <div class="hero-stats-section" id="heroStatsSection">
+        <!-- Nền ảnh chuyển động Fade Layer (img1, img2, img4) -->
+        <div class="hero-bg-slider" id="heroBgSlider">
+            <div class="hero-bg-slide active" style="background-image: linear-gradient(90deg, rgba(7, 30, 61, 0.94) 0%, rgba(8, 40, 77, 0.88) 55%, rgba(6, 27, 53, 0.85) 100%), url('<?= url('assets/images/img1.jpg') ?>');"></div>
+            <div class="hero-bg-slide" style="background-image: linear-gradient(90deg, rgba(7, 30, 61, 0.94) 0%, rgba(8, 40, 77, 0.88) 55%, rgba(6, 27, 53, 0.85) 100%), url('<?= url('assets/images/img2.jpg') ?>');"></div>
+            <div class="hero-bg-slide" style="background-image: linear-gradient(90deg, rgba(7, 30, 61, 0.94) 0%, rgba(8, 40, 77, 0.88) 55%, rgba(6, 27, 53, 0.85) 100%), url('<?= url('assets/images/img4.jpg') ?>');"></div>
+        </div>
+
+        <div class="hero-banner" style="position: relative; z-index: 2;">
             <div class="hero-grid">
 
-                <!-- Hero Left Column -->
+                <!-- Hero Left Column: Multi-Slide Content -->
                 <div class="hero-left">
-                    <span class="hero-tag">Đợt đăng ký lưu trú mới &bull; Row-Level Locking</span>
-                    <h1 class="hero-title">
-                        Không gian phòng ở chuẩn mực<br>
-                        <span class="highlight-blue">Xét duyệt &amp; giữ chỗ 72 giờ</span>
-                    </h1>
-                    <p class="hero-desc">
-                        Lọc điều kiện lưu trú, xét duyệt hồ sơ và kiểm soát thời hạn thanh toán. Minh bạch từng bước, an tâm mỗi lần giữ chỗ.
-                    </p>
+                    <div class="hero-content-slider" id="heroContentSlider">
+                        <!-- Slide 1 (Nền img1) -->
+                        <div class="hero-slide-item active" data-slide="0">
+                            <span class="hero-tag">Đợt đăng ký lưu trú mới &bull; Row-Level Locking</span>
+                            <h1 class="hero-title">
+                                Không gian phòng ở chuẩn mực<br>
+                                <span class="highlight-blue">Xét duyệt &amp; giữ chỗ 72 giờ</span>
+                            </h1>
+                            <p class="hero-desc">
+                                Lọc điều kiện lưu trú, xét duyệt hồ sơ và kiểm soát thời hạn thanh toán. Minh bạch từng bước, an tâm mỗi lần giữ chỗ.
+                            </p>
+                        </div>
 
-                    <div class="hero-carousel-dots">
-                        <span class="dot active"></span>
-                        <span class="dot"></span>
-                        <span class="dot"></span>
+                        <!-- Slide 2 (Nền img2) -->
+                        <div class="hero-slide-item" data-slide="1">
+                            <span class="hero-tag">Đại học Quốc gia TP. Hồ Chí Minh &bull; Cổng Lưu trú Sinh viên</span>
+                            <h1 class="hero-title">
+                                Hệ thống Quản lý<br>
+                                <span class="highlight-blue">Ký túc xá ĐHQG-HCM</span>
+                            </h1>
+                            <p class="hero-desc">
+                                Giải pháp tích hợp quản lý lưu trú sinh viên, xét duyệt giữ chỗ theo hạn định 72 giờ, dồn phòng tối ưu, thanh toán điện nước bậc thang và giám sát an ninh nội trú.
+                            </p>
+                        </div>
+
+                        <!-- Slide 3 (Nền img4) -->
+                        <div class="hero-slide-item" data-slide="2">
+                            <span class="hero-tag">An ninh Nội trú Thông minh &bull; Kiểm soát Thẻ từ 24/7</span>
+                            <h1 class="hero-title">
+                                An toàn Nội vụ Sinh viên &amp;<br>
+                                <span class="highlight-blue">Tự động hóa Điện Nước, Bảo trì</span>
+                            </h1>
+                            <p class="hero-desc">
+                                Đối soát dữ liệu quét thẻ ra vào cổng với đơn xin tạm vắng, tính tiền điện nước lũy tiến minh bạch và chống trùng lặp phiếu báo hỏng thiết bị trong phòng.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="hero-carousel-dots" id="heroCarouselDots">
+                        <span class="dot active" data-slide="0" role="button" aria-label="Chuyển đến Slide 1" title="Chuyển đến Slide 1"></span>
+                        <span class="dot" data-slide="1" role="button" aria-label="Chuyển đến Slide 2" title="Chuyển đến Slide 2"></span>
+                        <span class="dot" data-slide="2" role="button" aria-label="Chuyển đến Slide 3" title="Chuyển đến Slide 3"></span>
                     </div>
 
                     <div class="hero-cta-btns">
@@ -189,7 +225,7 @@ if (!empty($availableRooms) && is_array($availableRooms)) {
     <div id="highlights" class="highlight-banners-grid">
         <!-- Banner Lớn -->
         <div class="banner-card banner-navy">
-            <img src="<?= url('assets/images/img2.jpg') ?>" alt="Ký túc xá hiện đại" class="banner-bg-image">
+            <img src="<?= url('assets/images/img5.png') ?>" alt="Không gian phòng ở hiện đại" class="banner-bg-image">
             <div class="banner-overlay"></div>
             <div class="banner-content">
                 <span class="banner-badge">ĐỢT ĐĂNG KÝ NỘI TRÚ &bull; NĂM HỌC 2026 &ndash; 2027</span>
@@ -549,6 +585,64 @@ if (!empty($availableRooms) && is_array($availableRooms)) {
     };
 
     document.addEventListener('DOMContentLoaded', function() {
+
+        // 0. Hero Carousel Slider (Tự động chuyển slide & ảnh nền img1, img2, img4)
+        (function() {
+            const bgSlides = document.querySelectorAll('#heroBgSlider .hero-bg-slide');
+            const contentSlides = document.querySelectorAll('#heroContentSlider .hero-slide-item');
+            const dots = document.querySelectorAll('#heroCarouselDots .dot');
+            const totalSlides = contentSlides.length;
+            if (totalSlides === 0) return;
+
+            let currentSlide = 0;
+            let slideTimer = null;
+            const slideInterval = 5000; // Tự động chuyển sau mỗi 5 giây
+
+            function goToSlide(index) {
+                currentSlide = (index + totalSlides) % totalSlides;
+
+                bgSlides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === currentSlide);
+                });
+
+                contentSlides.forEach((slide, i) => {
+                    slide.classList.toggle('active', i === currentSlide);
+                });
+
+                dots.forEach((dot, i) => {
+                    dot.classList.toggle('active', i === currentSlide);
+                });
+            }
+
+            function startAutoSlide() {
+                stopAutoSlide();
+                slideTimer = setInterval(() => {
+                    goToSlide(currentSlide + 1);
+                }, slideInterval);
+            }
+
+            function stopAutoSlide() {
+                if (slideTimer) {
+                    clearInterval(slideTimer);
+                    slideTimer = null;
+                }
+            }
+
+            dots.forEach((dot, idx) => {
+                dot.addEventListener('click', function() {
+                    goToSlide(idx);
+                    startAutoSlide();
+                });
+            });
+
+            const bannerEl = document.querySelector('.hero-banner');
+            if (bannerEl) {
+                bannerEl.addEventListener('mouseenter', stopAutoSlide);
+                bannerEl.addEventListener('mouseleave', startAutoSlide);
+            }
+
+            startAutoSlide();
+        })();
 
         // 1. Chuyển đổi trạng thái Hero Status Card (Toàn KTX, Khu A, Khu B)
         const heroTabs = document.querySelectorAll('#heroPillTabs .pill-tab');

@@ -14,7 +14,7 @@
 <body>
     <header class="navbar">
         <a href="<?= url('/') ?>" class="brand" style="display: flex; align-items: center; text-decoration: none;">
-            <img src="<?= url('assets/images/Logo_DHQGHCM.png') ?>" alt="Đại học Quốc gia TP. Hồ Chí Minh - Hệ thống Quản lý Ký túc xá Sinh viên" style="height: 60px; width: auto; scale:1.2; margin-left:40px">
+            <img src="<?= url('assets/images/Logo_DHQGHCM.png') ?>" alt="Đại học Quốc gia TP. Hồ Chí Minh - Hệ thống Quản lý Ký túc xá Sinh viên" style="height: 55px; width: auto; margin-left: 40px; margin-top: 4px; object-fit: contain;">
         </a>
 
         <ul class="nav-links">
@@ -41,7 +41,6 @@
                         <li><a href="<?= url('staff/discipline') ?>" class="<?= nav_active_class('staff/discipline') ?>">An ninh</a></li>
                     <?php elseif (\App\Core\Auth::isKeToan()): ?>
                         <li><a href="<?= url('staff/utilities') ?>" class="<?= nav_active_class('staff/utilities') ?>">Điện nước & Công nợ</a></li>
-                        <li><a href="<?= url('staff/requests') ?>" class="<?= nav_active_class('staff/requests') ?>">Đơn 1 cửa</a></li>
                     <?php else: ?>
                         <li><a href="<?= url('staff/maintenance') ?>" class="<?= nav_active_class('staff/maintenance') ?>">Bảo trì</a></li>
                     <?php endif; ?>

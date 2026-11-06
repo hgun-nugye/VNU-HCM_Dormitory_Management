@@ -1049,17 +1049,54 @@ button i:only-child {
   position: relative;
   background: #071e3d;
   padding-bottom: 48px;
-  background-image:
-    linear-gradient(
-      90deg,
-      rgba(7, 30, 61, 0.96) 0%,
-      rgba(8, 40, 77, 0.9) 55%,
-      rgba(6, 27, 53, 0.88) 100%
-    ),
-    var(--hero-bg);
+  overflow: hidden;
+}
+
+/* Hero Background Slider & Content Transition */
+.hero-bg-slider {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.hero-bg-slide {
+  position: absolute;
+  inset: 0;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hero-bg-slide.active {
+  opacity: 1;
+}
+
+.hero-content-slider {
+  position: relative;
+  min-height: 230px;
+}
+
+.hero-slide-item {
+  display: none;
+}
+
+.hero-slide-item.active {
+  display: block;
+  animation: heroSlideFadeIn 0.5s ease-out forwards;
+}
+
+@keyframes heroSlideFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .hero-banner {
@@ -1134,6 +1171,7 @@ button i:only-child {
   background: #475569;
   display: inline-block;
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 .hero-carousel-dots .dot.active {
   width: 24px;
@@ -1419,9 +1457,11 @@ button i:only-child {
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    135deg,
+    to top,
     rgba(11, 37, 69, 0.95) 0%,
-    rgba(15, 45, 82, 0.88) 100%
+    rgba(15, 45, 82, 0.75) 55%,
+    rgba(15, 45, 82, 0.1) 85%,
+    rgba(15, 45, 82, 0) 100%
   );
   z-index: 2;
 }
@@ -1431,10 +1471,10 @@ button i:only-child {
 }
 .banner-badge {
   display: inline-block;
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 900;
   letter-spacing: 0.5px;
-  color: #38bdf8;
+  color: #055072;
   text-transform: uppercase;
   margin-bottom: 12px;
 }

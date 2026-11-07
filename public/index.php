@@ -70,6 +70,7 @@ Router::get('/student/profile', 'Student\\ProfileController@index', [StudentMidd
 Router::post('/student/profile/update', 'Student\\ProfileController@update', [StudentMiddleware::class]);
 Router::post('/student/profile/change-password', 'Student\\ProfileController@changePassword', [StudentMiddleware::class]);
 Router::get('/student/payments', 'Student\\PaymentController@index', [StudentMiddleware::class]);
+Router::post('/student/payments/pay', 'Student\\PaymentController@payInvoice', [StudentMiddleware::class]);
 
 // Student - Dịch vụ một cửa (Yêu cầu & Đơn từ trực tuyến)
 Router::get('/student/requests', 'Student\\RequestController@index', [StudentMiddleware::class]);
@@ -141,6 +142,13 @@ Router::post('/staff/applications/reject-miengiam', 'Staff\\ApplicationControlle
 Router::post('/staff/applications/create-period', 'Staff\\ApplicationController@createPeriod', [StaffMiddleware::class]);
 Router::post('/staff/applications/close-period', 'Staff\\ApplicationController@closePeriod', [StaffMiddleware::class]);
 Router::post('/staff/applications/extend-period', 'Staff\\ApplicationController@extendPeriod', [StaffMiddleware::class]);
+
+// Staff - Quầy Thu Ngân Tiền Mặt & Quản lý Tài vụ (Kế toán & Quản lý KTX)
+Router::get('/staff/cashier', 'Staff\\CashierController@index', [StaffMiddleware::class]);
+Router::get('/staff/cashier/search', 'Staff\\CashierController@search', [StaffMiddleware::class]);
+Router::post('/staff/cashier/pay', 'Staff\\CashierController@processPayment', [StaffMiddleware::class]);
+Router::get('/staff/cashier/receipt', 'Staff\\CashierController@receipt', [StaffMiddleware::class]);
+Router::get('/staff/cashier/export', 'Staff\\CashierController@exportDaily', [StaffMiddleware::class]);
 
 // Staff - Tiện ích, Yêu cầu, Bảo trì, Kỷ luật
 Router::get('/staff/utilities', 'Staff\\UtilityController@utilities', [StaffMiddleware::class]);
@@ -239,6 +247,11 @@ Router::get('/api/cron/check-absence', 'Api\\CronApiController@triggerAbsence', 
 Router::post('/api/cron/check-absence', 'Api\\CronApiController@triggerAbsence', [StaffMiddleware::class]);
 Router::get('/cron/trigger_release', 'Api\\CronApiController@triggerRelease', [StaffMiddleware::class]);
 Router::get('/cron/trigger_absence', 'Api\\CronApiController@triggerAbsence', [StaffMiddleware::class]);
+
+// 6. Phân hệ Thanh toán & Cổng QR VCB Digibank (Payment APIs - Cho phép App Android gọi trực tiếp)
+Router::get('/api/payment/check-status', 'Api\\PaymentApiController@checkStatus');
+Router::post('/api/payment/vcb-confirm', 'Api\\PaymentApiController@confirmVcbPayment');
+Router::post('/api/payment/simulate', 'Api\\PaymentApiController@simulateWebPayment');
 
 // 4. Dispatch Request & Catch Errors
 try {

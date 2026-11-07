@@ -211,6 +211,78 @@ if (!function_exists('json_response')) {
 }
 
 /**
+ * Đọc số tiền thành chữ tiếng Việt (Chuẩn Kế toán Tài chính)
+ */
+if (!function_exists('convert_number_to_vietnamese_words')) {
+    function convert_number_to_vietnamese_words($number) {
+        $number = (float)$number;
+        if ($number == 0) {
+            return 'Không đồng';
+        }
+
+        $digits = ['', 'một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín'];
+        $units = ['', 'nghìn', 'triệu', 'tỷ', 'nghìn tỷ', 'triệu tỷ'];
+
+        $readThreeDigits = function ($n, $full = false) use ($digits) {
+            $hundred = (int)floor($n / 100);
+            $ten = (int)floor(($n % 100) / 10);
+            $unit = (int)($n % 10);
+            $res = '';
+
+            if ($hundred > 0 || $full) {
+                $res .= $digits[$hundred] . ' trăm ';
+            }
+
+            if ($ten > 1) {
+                $res .= $digits[$ten] . ' mươi ';
+                if ($unit == 1) $res .= 'mốt ';
+                elseif ($unit == 5) $res .= 'lăm ';
+                elseif ($unit > 0) $res .= $digits[$unit] . ' ';
+            } elseif ($ten == 1) {
+                $res .= 'mười ';
+                if ($unit == 5) $res .= 'lăm ';
+                elseif ($unit > 0) $res .= $digits[$unit] . ' ';
+            } elseif ($ten == 0 && ($hundred > 0 || $full)) {
+                if ($unit > 0) {
+                    $res .= 'lẻ ' . $digits[$unit] . ' ';
+                }
+            } else {
+                if ($unit > 0) {
+                    $res .= $digits[$unit] . ' ';
+                }
+            }
+
+            return trim($res);
+        };
+
+        $groups = [];
+        $temp = $number;
+        while ($temp > 0) {
+            $groups[] = (int)fmod($temp, 1000);
+            $temp = floor($temp / 1000);
+        }
+
+        $words = [];
+        $count = count($groups);
+        for ($i = $count - 1; $i >= 0; $i--) {
+            $g = $groups[$i];
+            if ($g > 0) {
+                $isFull = ($i < $count - 1);
+                $w = $readThreeDigits($g, $isFull);
+                if (!empty($w)) {
+                    $words[] = $w . ' ' . $units[$i];
+                }
+            }
+        }
+
+        $result = trim(implode(' ', $words));
+        // Viết hoa chữ cái đầu và thêm đuôi đồng
+        $result = mb_strtoupper(mb_substr($result, 0, 1)) . mb_substr($result, 1) . ' đồng chẵn';
+        return preg_replace('/\s+/', ' ', $result);
+    }
+}
+
+/**
  * Debug and Die
  */
 if (!function_exists('dd')) {
@@ -223,5 +295,83 @@ if (!function_exists('dd')) {
             echo '</pre>';
         }
         exit;
+    }
+}
+
+/**
+ * Tự động phát hiện địa chỉ IP Wi-Fi/LAN của máy chủ (dành cho kết nối app điện thoại qua mã QR)
+ */
+if (!function_exists('get_local_server_ip')) {
+    function get_local_server_ip(): string {
+        static $cachedIp = null;
+        if ($cachedIp !== null) {
+            return $cachedIp;
+        }
+
+        // 1. Nếu người dùng truy cập qua IP LAN trực tiếp trên thanh địa chỉ trình duyệt
+        if (!empty($_SERVER['HTTP_HOST'])) {
+            $host = explode(':', $_SERVER['HTTP_HOST'])[0];
+            if ($host !== 'localhost' && $host !== '127.0.0.1' && filter_var($host, FILTER_VALIDATE_IP)) {
+                return $cachedIp = $host;
+            }
+        }
+
+        // 2. Tự động đọc IP Wi-Fi/LAN qua ipconfig trên Windows
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            $output = @shell_exec('ipconfig');
+            if (!empty($output)) {
+                $adapters = preg_split('/(?:\r?\n)(?=[a-zA-Z0-9][^\r\n]*adapter)/i', $output);
+                
+                // Ưu tiên 1: Adapter Wi-Fi có Default Gateway (đang kết nối internet thực tế)
+                foreach ($adapters as $adapter) {
+                    if (preg_match('/Wi-Fi|Wireless|WLAN/i', $adapter)) {
+                        if (preg_match('/IPv4 Address[ .:]+([0-9.]+)/i', $adapter, $ipMatch)) {
+                            $ip = trim($ipMatch[1]);
+                            if (preg_match('/Default Gateway[ .:]+([0-9.]+)/i', $adapter, $gwMatch) && trim($gwMatch[1]) !== '') {
+                                return $cachedIp = $ip;
+                            }
+                        }
+                    }
+                }
+
+                // Ưu tiên 2: Bất kỳ Adapter Wi-Fi nào có IPv4 (không bị disconnected)
+                foreach ($adapters as $adapter) {
+                    if (preg_match('/Wi-Fi|Wireless|WLAN/i', $adapter) && !preg_match('/Media disconnected/i', $adapter)) {
+                        if (preg_match('/IPv4 Address[ .:]+([0-9.]+)/i', $adapter, $ipMatch)) {
+                            return $cachedIp = trim($ipMatch[1]);
+                        }
+                    }
+                }
+
+                // Ưu tiên 3: Adapter Ethernet vật lý có Default Gateway (bỏ qua VMware, VirtualBox, vEthernet)
+                foreach ($adapters as $adapter) {
+                    if (!preg_match('/VMware|VirtualBox|vEthernet|Loopback/i', $adapter)) {
+                        if (preg_match('/IPv4 Address[ .:]+([0-9.]+)/i', $adapter, $ipMatch)) {
+                            $ip = trim($ipMatch[1]);
+                            if (preg_match('/Default Gateway[ .:]+([0-9.]+)/i', $adapter, $gwMatch) && trim($gwMatch[1]) !== '') {
+                                return $cachedIp = $ip;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. Fallback bằng gethostbynamel (loại trừ các card mạng ảo VMware và loopback)
+        $ips = @gethostbynamel(gethostname());
+        if (is_array($ips)) {
+            foreach ($ips as $ip) {
+                if ($ip !== '127.0.0.1' && !str_starts_with($ip, '192.168.17.') && !str_starts_with($ip, '192.168.179.') && !str_ends_with($ip, '.1')) {
+                    return $cachedIp = $ip;
+                }
+            }
+            foreach ($ips as $ip) {
+                if ($ip !== '127.0.0.1') {
+                    return $cachedIp = $ip;
+                }
+            }
+        }
+
+        return $cachedIp = ($_SERVER['SERVER_ADDR'] ?? '127.0.0.1');
     }
 }

@@ -434,6 +434,44 @@ class UtilityBillingService {
                 ['hd' => $maHoaDon]
             );
 
+            // 3. Nếu là hóa đơn lệ phí phòng (HD-HS... hoặc Lệ phí chỗ ở) -> Kích hoạt hợp đồng nội trú
+            if (str_starts_with($maHoaDon, 'HD-HS')) {
+                $maHoSo = substr($maHoaDon, 3);
+                Database::execute(
+                    "UPDATE HoSoDangKy SET TrangThaiHoSo = 'Đã duyệt' WHERE MaHoSo = :hs",
+                    ['hs' => $maHoSo]
+                );
+
+                $hoSo = Database::fetch("SELECT * FROM HoSoDangKy WHERE MaHoSo = :hs LIMIT 1", ['hs' => $maHoSo]);
+                if ($hoSo && !empty($hoSo['MaGiuong'])) {
+                    $existingHd = Database::fetch("SELECT MaHopDong FROM HopDongNoiTru WHERE MaHoSo = :hs LIMIT 1", ['hs' => $maHoSo]);
+                    if (!$existingHd) {
+                        $maHopDong = 'HD' . date('Y') . strtoupper(substr(uniqid(), -4));
+                        $ngayBatDau = date('Y-m-d');
+                        $ngayKetThuc = date('Y-m-d', strtotime('+10 months'));
+
+                        Database::execute(
+                            "INSERT INTO HopDongNoiTru 
+                             (MaHopDong, MaHoSo, MaSinhVien, MaGiuong, NgayBatDau, NgayKetThuc, DaNopMauCT01, TrangThaiHopDong)
+                             VALUES (:maHD, :maHS, :maSV, :maGiuong, :bd, :kt, 0, 'Chờ hiệu lực')",
+                            [
+                                'maHD' => $maHopDong,
+                                'maHS' => $maHoSo,
+                                'maSV' => $hoSo['MaSinhVien'],
+                                'maGiuong' => $hoSo['MaGiuong'],
+                                'bd' => $ngayBatDau,
+                                'kt' => $ngayKetThuc
+                            ]
+                        );
+
+                        Database::execute(
+                            "UPDATE HoaDon SET MaHopDong = :maHD WHERE MaHoaDon = :hd",
+                            ['maHD' => $maHopDong, 'hd' => $maHoaDon]
+                        );
+                    }
+                }
+            }
+
             Database::commit();
 
             return [

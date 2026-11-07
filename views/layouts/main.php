@@ -40,6 +40,7 @@
                         <li><a href="<?= url('staff/maintenance') ?>" class="<?= nav_active_class('staff/maintenance') ?>">Bảo trì</a></li>
                         <li><a href="<?= url('staff/discipline') ?>" class="<?= nav_active_class('staff/discipline') ?>">An ninh</a></li>
                     <?php elseif (\App\Core\Auth::isKeToan()): ?>
+                        <li><a href="<?= url('staff/cashier') ?>" class="<?= nav_active_class('staff/cashier') ?>">Quầy thu ngân</a></li>
                         <li><a href="<?= url('staff/utilities') ?>" class="<?= nav_active_class('staff/utilities') ?>">Điện nước & Công nợ</a></li>
                     <?php else: ?>
                         <li><a href="<?= url('staff/maintenance') ?>" class="<?= nav_active_class('staff/maintenance') ?>">Bảo trì</a></li>

@@ -118,7 +118,7 @@ $formatTenToa = function (?string $rawName, ?string $code = ''): string {
     <!-- THANH BỘ LỌC TÌM KIẾM (ĐỒNG BỘ VỚI BOX FILTER CỦA STAFF/UTILITIES) -->
     <div class="card" style="margin-bottom: 24px; padding: 14px 16px; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); background: #f8fafc;">
         <form method="GET" action="<?= url('staff/cashier') ?>" id="cashierSearchForm" style="margin: 0;">
-            <input type="hidden" name="tab" value="<?= htmlspecialchars($activeTab) ?>">
+            <input type="hidden" name="tab" value="pos">
 
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <div style="position: relative; flex: 1; min-width: 280px;">
@@ -206,7 +206,7 @@ $formatTenToa = function (?string $rawName, ?string $code = ''): string {
                         <div style="font-size: 0.85rem; line-height: 1.9; color: var(--text-secondary);">
                             <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #f1f5f9; padding: 3px 0;">
                                 <span style="color: var(--text-muted);">Số CCCD:</span>
-                                <b><?= htmlspecialchars($studentData['CCCD'] ?? '---') ?></b>
+                                <b><?= htmlspecialchars($studentData['SoCCCD'] ?? $studentData['CCCD'] ?? '---') ?></b>
                             </div>
                             <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #f1f5f9; padding: 3px 0;">
                                 <span style="color: var(--text-muted);">Số ĐT:</span>
@@ -682,7 +682,7 @@ $formatTenToa = function (?string $rawName, ?string $code = ''): string {
                                         <div>
                                             <b style="color: var(--text-primary); font-size: 0.9rem;">${item.HoVaTen}</b>
                                             <span style="color: var(--primary); font-weight: 600; font-size: 0.82rem; margin-left: 6px;">[${item.MSSVTaiTruong || item.MaSinhVien}]</span>
-                                            <div style="font-size: 0.75rem; color: var(--text-muted);">CCCD: ${item.CCCD || '---'} &bull; SĐT: ${item.SoDienThoai || '---'}</div>
+                                            <div style="font-size: 0.75rem; color: var(--text-muted);">CCCD: ${item.SoCCCD || item.CCCD || '---'} &bull; SĐT: ${item.SoDienThoai || '---'}</div>
                                         </div>
                                         <div style="text-align: right; font-size: 0.82rem;">
                                             ${debtText}

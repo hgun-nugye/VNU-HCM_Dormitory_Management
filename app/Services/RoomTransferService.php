@@ -152,6 +152,13 @@ class RoomTransferService {
             }
 
             Database::commit();
+
+            try {
+                MailService::notifyManagersNewRequest($maDon);
+            } catch (\Throwable $e) {
+                error_log('Lỗi gửi email cho cán bộ quản lý (submitTransferRequest): ' . $e->getMessage());
+            }
+
             return [
                 'success' => true,
                 'maDon' => $maDon,

@@ -105,6 +105,7 @@ class RegistrationController extends Controller
             'areas' => $areas,
             'roomTypes' => $roomTypes,
             'studentPrefill' => $studentPrefill,
+            'old' => Session::flash('old') ?? [],
             'success' => Session::flash('success'),
             'error' => Session::flash('error'),
         ]);
@@ -145,12 +146,22 @@ class RegistrationController extends Controller
         (new \App\Controllers\Api\RegistrationApiController())->options();
     }
 
+    private function redirectWithError(string $message, ?Request $request = null): void
+    {
+        if ($request) {
+            $all = $request->all();
+            unset($all['password'], $all['confirm_password'], $all['csrf_token'], $all['_token']);
+            Session::flash('old', $all);
+        }
+        Session::flash('error', $message);
+        $this->redirect('register');
+    }
+
     public function submit(): void
     {
         $request = new Request();
         if (!$this->validCsrf($request)) {
-            Session::flash('error', 'Phiên biểu mẫu đã hết hạn. Vui lòng tải lại trang.');
-            $this->redirect('register');
+            $this->redirectWithError('Phiên biểu mẫu đã hết hạn. Vui lòng tải lại trang.', $request);
             return;
         }
 
@@ -161,8 +172,7 @@ class RegistrationController extends Controller
              ORDER BY ThoiGianDongCong DESC LIMIT 1"
         );
         if (!$activeDot) {
-            Session::flash('error', 'Cổng đăng ký nội trú hiện đang đóng hoặc chưa tới thời gian tiếp nhận. Vui lòng theo dõi thông báo đợt đăng ký tiếp theo!');
-            $this->redirect('register');
+            $this->redirectWithError('Cổng đăng ký nội trú hiện đang đóng hoặc chưa tới thời gian tiếp nhận. Vui lòng theo dõi thông báo đợt đăng ký tiếp theo!', $request);
             return;
         }
 
@@ -200,55 +210,45 @@ class RegistrationController extends Controller
             $password = $confirmPassword = 'existing-account';
         }
         if ((!$isExistingStudent && ($username === '' || $password === '' || $confirmPassword === '')) || $hoTen === '' || $mssv === '' || $cccd === '' || (!$isExistingStudent && $phone === '') || $email === '' || $university === '' || $bedId === '') {
-            Session::flash('error', 'Vui lòng điền đầy đủ thông tin tài khoản, hồ sơ và vị trí giường.');
-            $this->redirect('register');
+            $this->redirectWithError('Vui lòng điền đầy đủ thông tin tài khoản, hồ sơ và vị trí giường.', $request);
             return;
         }
 
         if (mb_strlen($username) > 50 || preg_match('/[\x00-\x1F\x7F]/', $username)) {
-            Session::flash('error', 'Tên đăng nhập không được dài quá 50 ký tự hoặc chứa ký tự điều khiển.');
-            $this->redirect('register');
+            $this->redirectWithError('Tên đăng nhập không được dài quá 50 ký tự hoặc chứa ký tự điều khiển.', $request);
             return;
         }
         if (!preg_match('/^[A-Za-z0-9]+$/', $mssv)) {
-            Session::flash('error', 'MSSV chỉ được chứa chữ cái không dấu và chữ số.');
-            $this->redirect('register');
+            $this->redirectWithError('MSSV chỉ được chứa chữ cái không dấu và chữ số.', $request);
             return;
         }
         if (!preg_match('/^[0-9]{12}$/', $cccd)) {
-            Session::flash('error', 'Số CCCD phải gồm đúng 12 chữ số.');
-            $this->redirect('register');
+            $this->redirectWithError('Số CCCD phải gồm đúng 12 chữ số.', $request);
             return;
         }
         if ($phone !== '' && !preg_match('/^[0-9]{9,11}$/', $phone)) {
-            Session::flash('error', 'Số điện thoại phải gồm từ 9 đến 11 chữ số.');
-            $this->redirect('register');
+            $this->redirectWithError('Số điện thoại phải gồm từ 9 đến 11 chữ số.', $request);
             return;
         }
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            Session::flash('error', 'Email cá nhân không hợp lệ.');
-            $this->redirect('register');
+            $this->redirectWithError('Email cá nhân không hợp lệ.', $request);
             return;
         }
         if (mb_strlen($email) > 100) {
-            Session::flash('error', 'Email không được dài quá 100 ký tự.');
-            $this->redirect('register');
+            $this->redirectWithError('Email không được dài quá 100 ký tự.', $request);
             return;
         }
         if (!$isExistingStudent && mb_strlen($password) < 6) {
-            Session::flash('error', 'Mật khẩu phải có ít nhất 6 ký tự.');
-            $this->redirect('register');
+            $this->redirectWithError('Mật khẩu phải có ít nhất 6 ký tự.', $request);
             return;
         }
         if (!$isExistingStudent && $password !== $confirmPassword) {
-            Session::flash('error', 'Mật khẩu nhập lại chưa khớp.');
-            $this->redirect('register');
+            $this->redirectWithError('Mật khẩu nhập lại chưa khớp.', $request);
             return;
         }
         $otpError = $this->emailOtpError($email, (string) $request->input('email_otp', ''));
         if ($otpError !== null) {
-            Session::flash('error', $otpError);
-            $this->redirect('register');
+            $this->redirectWithError($otpError, $request);
             return;
         }
 
@@ -282,8 +282,7 @@ class RegistrationController extends Controller
                 ['username' => $username, 'mssv' => $mssv]
             );
             if ($existingAccount) {
-                Session::flash('error', 'Tên đăng nhập này đã được sử dụng. Vui lòng chọn tên khác.');
-                $this->redirect('register');
+                $this->redirectWithError('Tên đăng nhập này đã được sử dụng. Vui lòng chọn tên khác.', $request);
                 return;
             }
 
@@ -293,8 +292,7 @@ class RegistrationController extends Controller
                 ['usernameMaSinhVien' => $username, 'usernameMssv' => $username]
             );
             if ($usernameStudent) {
-                Session::flash('error', 'Tên đăng nhập này đã được sử dụng làm mã sinh viên. Vui lòng chọn tên khác.');
-                $this->redirect('register');
+                $this->redirectWithError('Tên đăng nhập này đã được sử dụng làm mã sinh viên. Vui lòng chọn tên khác.', $request);
                 return;
             }
 
@@ -303,8 +301,7 @@ class RegistrationController extends Controller
                 ['cccd' => $cccd]
             );
             if ($existingCccd) {
-                Session::flash('error', 'Số CCCD này đã được đăng ký trong hệ thống.');
-                $this->redirect('register');
+                $this->redirectWithError('Số CCCD này đã được đăng ký trong hệ thống.', $request);
                 return;
             }
 
@@ -317,8 +314,7 @@ class RegistrationController extends Controller
                 ['email' => $email]
             );
             if (($existingEmailStudent && (!$isExistingStudent || $existingEmailStudent['MaSinhVien'] !== $studentId)) || $existingEmailStaff) {
-                Session::flash('error', 'Email này đã được sử dụng cho một tài khoản khác.');
-                $this->redirect('register');
+                $this->redirectWithError('Email này đã được sử dụng cho một tài khoản khác.', $request);
                 return;
             }
 
@@ -332,14 +328,12 @@ class RegistrationController extends Controller
                     ['phone' => $phone]
                 );
                 if ($existingPhoneStudent || $existingPhoneStaff) {
-                    Session::flash('error', 'Số điện thoại này đã được sử dụng cho một tài khoản khác.');
-                    $this->redirect('register');
+                    $this->redirectWithError('Số điện thoại này đã được sử dụng cho một tài khoản khác.', $request);
                     return;
                 }
             }
         } catch (\Throwable $e) {
-            Session::flash('error', 'Không thể kiểm tra thông tin đăng ký. Vui lòng thử lại.');
-            $this->redirect('register');
+            $this->redirectWithError('Không thể kiểm tra thông tin đăng ký. Vui lòng thử lại.', $request);
             return;
         }
 
@@ -534,6 +528,13 @@ HTML;
             $mailResult = MailService::send($email, $hoTen, $subject, $html, $plain);
             $emailDelivered = ($mailResult['mode'] ?? '') === 'smtp';
 
+            // Gửi thông báo đến Cán bộ Quản lý liên quan phụ trách địa bàn để giải quyết hồ sơ đăng ký
+            try {
+                MailService::notifyManagersNewApplication($applicationId);
+            } catch (\Throwable $e) {
+                error_log('Lỗi gửi email thông báo cán bộ quản lý (đăng ký mới): ' . $e->getMessage());
+            }
+
             Session::flash(
                 'success',
                 "Đăng ký nội trú thành công! Mã hồ sơ: <b>{$applicationId}</b>.<br>"
@@ -550,8 +551,7 @@ HTML;
             $errorMessage = $e instanceof PDOException && $e->getCode() === '23000'
                 ? 'Một hoặc nhiều thông tin (tên đăng nhập, MSSV, CCCD, email hoặc số điện thoại) vừa được tài khoản khác đăng ký. Vui lòng kiểm tra lại.'
                 : ($e->getMessage() ?: 'Không thể tạo hồ sơ. Vui lòng thử lại.');
-            Session::flash('error', $errorMessage);
-            $this->redirect('register');
+            $this->redirectWithError($errorMessage, $request);
         }
     }
 }

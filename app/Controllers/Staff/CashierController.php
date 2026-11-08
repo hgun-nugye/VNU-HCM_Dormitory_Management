@@ -76,54 +76,59 @@ class CashierController extends Controller
 
         // Xử lý Tra cứu Sinh viên & Công nợ
         if (!empty($searchKeyword)) {
-            $studentData = $this->findStudent($searchKeyword);
+            try {
+                $studentData = $this->findStudent($searchKeyword);
 
-            if ($studentData) {
-                $maSV = $studentData['MaSinhVien'];
+                if ($studentData) {
+                    $maSV = $studentData['MaSinhVien'];
 
-                // 1. Lấy thông tin phòng ở hiện tại hoặc giường đang giữ chỗ
-                $roomInfo = Database::fetch("
-                    SELECT g.KyHieuGiuong, g.MaGiuong, p.SoPhong, p.MaPhong, tn.TenToaNha, tn.MaToaNha, cn.TenCum, k.TenKhu,
-                           hd.MaHopDong, hd.TrangThaiHopDong, hd.NgayNhanPhong
-                    FROM HopDongNoiTru hd
-                    JOIN Giuong g ON hd.MaGiuong = g.MaGiuong
-                    JOIN Phong p ON g.MaPhong = p.MaPhong
-                    JOIN ToaNha tn ON p.MaToaNha = tn.MaToaNha
-                    JOIN CumNha cn ON tn.MaCum = cn.MaCum
-                    JOIN KhuKTX k ON cn.MaKhu = k.MaKhu
-                    WHERE hd.MaSinhVien = :sv AND hd.TrangThaiHopDong IN ('Đang hiệu lực', 'Chờ hiệu lực')
-                    ORDER BY hd.NgayTao DESC LIMIT 1
-                ", ['sv' => $maSV]);
-
-                if (!$roomInfo) {
-                    // Nếu chưa có hợp đồng, kiểm tra hồ sơ đang giữ chỗ 72h
+                    // 1. Lấy thông tin phòng ở hiện tại hoặc giường đang giữ chỗ
                     $roomInfo = Database::fetch("
                         SELECT g.KyHieuGiuong, g.MaGiuong, p.SoPhong, p.MaPhong, tn.TenToaNha, tn.MaToaNha, cn.TenCum, k.TenKhu,
-                               hs.MaHoSo, hs.TrangThaiHoSo, hs.HanChotThanhToan
-                        FROM HoSoDangKy hs
-                        JOIN Giuong g ON hs.MaGiuong = g.MaGiuong
+                               hd.MaHopDong, hd.TrangThaiHopDong, hd.NgayNhanPhong
+                        FROM HopDongNoiTru hd
+                        JOIN Giuong g ON hd.MaGiuong = g.MaGiuong
                         JOIN Phong p ON g.MaPhong = p.MaPhong
                         JOIN ToaNha tn ON p.MaToaNha = tn.MaToaNha
                         JOIN CumNha cn ON tn.MaCum = cn.MaCum
                         JOIN KhuKTX k ON cn.MaKhu = k.MaKhu
-                        WHERE hs.MaSinhVien = :sv AND hs.TrangThaiHoSo IN ('Chờ thanh toán', 'Đã duyệt')
-                        ORDER BY hs.ThoiGianNop DESC LIMIT 1
+                        WHERE hd.MaSinhVien = :sv AND hd.TrangThaiHopDong IN ('Đang hiệu lực', 'Chờ hiệu lực')
+                        ORDER BY hd.NgayBatDau DESC, hd.MaHopDong DESC LIMIT 1
                     ", ['sv' => $maSV]);
-                }
 
-                // 2. Lấy TẤT CẢ các hóa đơn chưa thanh toán của sinh viên
-                $unpaidInvoices = Database::fetchAll("
-                    SELECT hd.*, p.SoPhong, tn.TenToaNha
-                    FROM HoaDon hd
-                    LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
-                    LEFT JOIN ToaNha tn ON p.MaToaNha = tn.MaToaNha
-                    WHERE hd.MaSinhVien = :sv AND hd.TrangThai = 'Chưa thanh toán'
-                    ORDER BY hd.NgayTao ASC
-                ", ['sv' => $maSV]);
+                    if (!$roomInfo) {
+                        // Nếu chưa có hợp đồng, kiểm tra hồ sơ đang giữ chỗ 72h
+                        $roomInfo = Database::fetch("
+                            SELECT g.KyHieuGiuong, g.MaGiuong, p.SoPhong, p.MaPhong, tn.TenToaNha, tn.MaToaNha, cn.TenCum, k.TenKhu,
+                                   hs.MaHoSo, hs.TrangThaiHoSo, hs.HanChotThanhToan
+                            FROM HoSoDangKy hs
+                            JOIN Giuong g ON hs.MaGiuong = g.MaGiuong
+                            JOIN Phong p ON g.MaPhong = p.MaPhong
+                            JOIN ToaNha tn ON p.MaToaNha = tn.MaToaNha
+                            JOIN CumNha cn ON tn.MaCum = cn.MaCum
+                            JOIN KhuKTX k ON cn.MaKhu = k.MaKhu
+                            WHERE hs.MaSinhVien = :sv AND hs.TrangThaiHoSo IN ('Chờ thanh toán', 'Đã duyệt')
+                            ORDER BY hs.ThoiGianNop DESC LIMIT 1
+                        ", ['sv' => $maSV]);
+                    }
 
-                foreach ($unpaidInvoices as $inv) {
-                    $totalDebt += (float)$inv['SoTienPhaiDong'];
+                    // 2. Lấy TẤT CẢ các hóa đơn chưa thanh toán của sinh viên
+                    $unpaidInvoices = Database::fetchAll("
+                        SELECT hd.*, p.SoPhong, tn.TenToaNha
+                        FROM HoaDon hd
+                        LEFT JOIN Phong p ON hd.MaPhong = p.MaPhong
+                        LEFT JOIN ToaNha tn ON p.MaToaNha = tn.MaToaNha
+                        WHERE hd.MaSinhVien = :sv AND hd.TrangThai = 'Chưa thanh toán'
+                        ORDER BY hd.NgayTao ASC
+                    ", ['sv' => $maSV]);
+
+                    foreach ($unpaidInvoices as $inv) {
+                        $totalDebt += (float)$inv['SoTienPhaiDong'];
+                    }
                 }
+            } catch (\Throwable $e) {
+                error_log('Lỗi tra cứu công nợ sinh viên (CashierController): ' . $e->getMessage());
+                Session::flash('error', 'Lỗi khi tra cứu công nợ: ' . $e->getMessage());
             }
         }
 
@@ -204,32 +209,41 @@ class CashierController extends Controller
             return;
         }
 
-        $results = Database::fetchAll("
-            SELECT sv.MaSinhVien, sv.HoVaTen, sv.MSSVTaiTruong, sv.SoDienThoai, sv.CCCD,
-                   COUNT(CASE WHEN hd.TrangThai = 'Chưa thanh toán' THEN 1 END) AS SoHoaDonNo,
-                   SUM(CASE WHEN hd.TrangThai = 'Chưa thanh toán' THEN hd.SoTienPhaiDong ELSE 0 END) AS TongNo
-            FROM SinhVien sv
-            LEFT JOIN HoaDon hd ON sv.MaSinhVien = hd.MaSinhVien
-            WHERE sv.MSSVTaiTruong LIKE :q1 
-               OR sv.MaSinhVien LIKE :q2
-               OR sv.CCCD LIKE :q3
-               OR sv.SoDienThoai LIKE :q4
-               OR sv.HoVaTen LIKE :q5
-            GROUP BY sv.MaSinhVien
-            ORDER BY SoHoaDonNo DESC, sv.HoVaTen ASC
-            LIMIT 8
-        ", [
-            'q1' => "%$q%",
-            'q2' => "%$q%",
-            'q3' => "%$q%",
-            'q4' => "%$q%",
-            'q5' => "%$q%"
-        ]);
+        try {
+            $results = Database::fetchAll("
+                SELECT sv.MaSinhVien, sv.HoVaTen, sv.MSSVTaiTruong, sv.SoDienThoai, sv.SoCCCD, sv.SoCCCD AS CCCD,
+                       COUNT(CASE WHEN hd.TrangThai = 'Chưa thanh toán' THEN 1 END) AS SoHoaDonNo,
+                       SUM(CASE WHEN hd.TrangThai = 'Chưa thanh toán' THEN hd.SoTienPhaiDong ELSE 0 END) AS TongNo
+                FROM SinhVien sv
+                LEFT JOIN HoaDon hd ON sv.MaSinhVien = hd.MaSinhVien
+                WHERE sv.MSSVTaiTruong LIKE :q1 
+                   OR sv.MaSinhVien LIKE :q2
+                   OR sv.SoCCCD LIKE :q3
+                   OR sv.SoDienThoai LIKE :q4
+                   OR sv.HoVaTen LIKE :q5
+                   OR hd.MaHoaDon LIKE :q6
+                   OR EXISTS (SELECT 1 FROM HoSoDangKy hs WHERE hs.MaSinhVien = sv.MaSinhVien AND hs.MaHoSo LIKE :q7)
+                GROUP BY sv.MaSinhVien, sv.HoVaTen, sv.MSSVTaiTruong, sv.SoDienThoai, sv.SoCCCD
+                ORDER BY SoHoaDonNo DESC, sv.HoVaTen ASC
+                LIMIT 8
+            ", [
+                'q1' => "%$q%",
+                'q2' => "%$q%",
+                'q3' => "%$q%",
+                'q4' => "%$q%",
+                'q5' => "%$q%",
+                'q6' => "%$q%",
+                'q7' => "%$q%"
+            ]);
 
-        json_response([
-            'success' => true,
-            'data' => $results
-        ]);
+            json_response([
+                'success' => true,
+                'data' => $results
+            ]);
+        } catch (\Throwable $e) {
+            error_log('Lỗi API cashier search: ' . $e->getMessage());
+            json_response(['success' => false, 'data' => [], 'message' => $e->getMessage()], 500);
+        }
     }
 
     /**
@@ -538,44 +552,63 @@ class CashierController extends Controller
     private function findStudent(string $query): ?array
     {
         $q = trim($query);
-
-        // 1. Tìm chính xác theo MSSV hoặc Mã sinh viên
-        $sv = Database::fetch("
-            SELECT sv.*, t.TenTruong 
-            FROM SinhVien sv 
-            LEFT JOIN TruongDaiHoc t ON sv.MaTruong = t.MaTruong 
-            WHERE sv.MSSVTaiTruong = :q OR sv.MaSinhVien = :q2 OR sv.CCCD = :q3 OR sv.SoDienThoai = :q4
-            LIMIT 1
-        ", ['q' => $q, 'q2' => $q, 'q3' => $q, 'q4' => $q]);
-
-        if ($sv) return $sv;
-
-        // 2. Tìm theo Mã hóa đơn (HD-...)
-        if (str_starts_with($q, 'HD')) {
-            $inv = Database::fetch("SELECT MaSinhVien FROM HoaDon WHERE MaHoaDon = :hd LIMIT 1", ['hd' => $q]);
-            if ($inv && !empty($inv['MaSinhVien'])) {
-                return $this->findStudent($inv['MaSinhVien']);
-            }
+        if ($q === '') {
+            return null;
         }
 
-        // 3. Tìm theo Mã hồ sơ (HS...)
-        if (str_starts_with($q, 'HS')) {
-            $hs = Database::fetch("SELECT MaSinhVien FROM HoSoDangKy WHERE MaHoSo = :hs LIMIT 1", ['hs' => $q]);
-            if ($hs && !empty($hs['MaSinhVien'])) {
-                return $this->findStudent($hs['MaSinhVien']);
+        try {
+            // 1. Tìm chính xác theo MSSV, Mã sinh viên, Số CCCD hoặc Số điện thoại
+            $sv = Database::fetch("
+                SELECT sv.*, t.TenTruong 
+                FROM SinhVien sv 
+                LEFT JOIN TruongDaiHoc t ON sv.MaTruong = t.MaTruong 
+                WHERE sv.MSSVTaiTruong = :q OR sv.MaSinhVien = :q2 OR sv.SoCCCD = :q3 OR sv.SoDienThoai = :q4
+                LIMIT 1
+            ", ['q' => $q, 'q2' => $q, 'q3' => $q, 'q4' => $q]);
+
+            if ($sv) return $sv;
+
+            // 2. Tìm theo Mã hóa đơn (HD-...)
+            if (str_starts_with($q, 'HD') || str_contains($q, 'HD-')) {
+                $inv = Database::fetch("SELECT MaSinhVien FROM HoaDon WHERE MaHoaDon = :hd OR MaHoaDon LIKE :hd2 LIMIT 1", ['hd' => $q, 'hd2' => "%$q%"]);
+                if ($inv && !empty($inv['MaSinhVien'])) {
+                    return $this->findStudent($inv['MaSinhVien']);
+                }
             }
+
+            // 3. Tìm theo Mã hồ sơ (HS...)
+            if (str_starts_with($q, 'HS')) {
+                $hs = Database::fetch("SELECT MaSinhVien FROM HoSoDangKy WHERE MaHoSo = :hs OR MaHoSo LIKE :hs2 LIMIT 1", ['hs' => $q, 'hs2' => "%$q%"]);
+                if ($hs && !empty($hs['MaSinhVien'])) {
+                    return $this->findStudent($hs['MaSinhVien']);
+                }
+            }
+
+            // 4. Tìm gần đúng theo họ tên
+            $sv = Database::fetch("
+                SELECT sv.*, t.TenTruong 
+                FROM SinhVien sv 
+                LEFT JOIN TruongDaiHoc t ON sv.MaTruong = t.MaTruong 
+                WHERE sv.HoVaTen LIKE :q
+                LIMIT 1
+            ", ['q' => "%$q%"]);
+
+            if ($sv) return $sv;
+
+            // 5. Tìm gần đúng theo MSSV, Số CCCD hoặc Số điện thoại
+            $sv = Database::fetch("
+                SELECT sv.*, t.TenTruong 
+                FROM SinhVien sv 
+                LEFT JOIN TruongDaiHoc t ON sv.MaTruong = t.MaTruong 
+                WHERE sv.MSSVTaiTruong LIKE :q1 OR sv.MaSinhVien LIKE :q2 OR sv.SoCCCD LIKE :q3 OR sv.SoDienThoai LIKE :q4
+                LIMIT 1
+            ", ['q1' => "%$q%", 'q2' => "%$q%", 'q3' => "%$q%", 'q4' => "%$q%"]);
+
+            return $sv ?: null;
+        } catch (\Throwable $e) {
+            error_log('Lỗi findStudent CashierController: ' . $e->getMessage());
+            return null;
         }
-
-        // 4. Tìm gần đúng theo họ tên
-        $sv = Database::fetch("
-            SELECT sv.*, t.TenTruong 
-            FROM SinhVien sv 
-            LEFT JOIN TruongDaiHoc t ON sv.MaTruong = t.MaTruong 
-            WHERE sv.HoVaTen LIKE :q
-            LIMIT 1
-        ", ['q' => "%$q%"]);
-
-        return $sv ?: null;
     }
 }
 

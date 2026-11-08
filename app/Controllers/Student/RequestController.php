@@ -7,6 +7,7 @@ use App\Core\Controller;
 use App\Core\Database;
 use App\Core\Request;
 use App\Core\Session;
+use App\Services\MailService;
 
 class RequestController extends Controller {
     public function attachment(): void {
@@ -273,6 +274,7 @@ class RequestController extends Controller {
                 }
             }
 
+            $createdRequestId = null;
             if ($type === 'Xin sửa chữa') {
                 $room = Database::fetch(
                     "SELECT g.MaPhong, p.MaToaNha FROM HopDongNoiTru hd
@@ -306,12 +308,13 @@ class RequestController extends Controller {
                     if (!move_uploaded_file($image['tmp_name'], $uploadDir . '/' . $filename)) throw new \RuntimeException('Không thể lưu ảnh minh họa.');
                     $imagePath = 'storage/uploads/repairs/' . $filename;
                 }
+                $createdRequestId = $this->newRequestId('BH');
                 Database::execute(
                     "INSERT INTO PhieuBaoHong
                      (MaPhieu,MaPhong,MaToaNha,MaThietBi,MaSinhVienBao,LoaiSuCo,MoTaHuHong,HinhAnh,TrangThaiSua,NgayBao)
                      VALUES (:id,:room,:building,:equipment,:mssv,'PHONG',:reason,:image,'Chờ xử lý',NOW())",
                     [
-                        'id' => $this->newRequestId('BH'),
+                        'id' => $createdRequestId,
                         'room' => $room['MaPhong'],
                         'building' => $room['MaToaNha'],
                         'equipment' => $equipmentId,
@@ -332,12 +335,13 @@ class RequestController extends Controller {
                     );
                     if (!$available) throw new \RuntimeException('bed_unavailable');
                 }
+                $createdRequestId = $this->newRequestId('DON');
                 Database::execute(
                     "INSERT INTO DonTuMotCua
                      (MaDon,MaSinhVien,MaHopDong,LoaiDon,MaGiuongChuyenDen,TuNgay,DenNgay,LyDo,TepMinhChung,TrangThaiDuyet)
                      VALUES (:id,:mssv,:contract,:type,:bed,:from,:to,:reason,:proof,'Chờ duyệt')",
                     [
-                        'id' => $this->newRequestId('DON'),
+                        'id' => $createdRequestId,
                         'mssv' => $mssv,
                         'contract' => $contract['MaHopDong'],
                         'type' => $type,
@@ -350,7 +354,19 @@ class RequestController extends Controller {
                 );
             }
             $pdo->commit();
-            Session::flash('success', 'Đã gửi yêu cầu thành công.');
+
+            // Gửi thông báo đến Cán bộ Quản lý liên quan phụ trách địa bàn để giải quyết
+            try {
+                if ($type === 'Xin sửa chữa') {
+                    MailService::notifyManagersNewRepairTicket($createdRequestId);
+                } else {
+                    MailService::notifyManagersNewRequest($createdRequestId);
+                }
+            } catch (\Throwable $e) {
+                error_log('Lỗi gửi email thông báo cán bộ quản lý (đơn từ/báo hỏng): ' . $e->getMessage());
+            }
+
+            Session::flash('success', 'Đã gửi yêu cầu thành công. Cán bộ quản lý phụ trách địa bàn đã nhận được thông báo để giải quyết.');
         } catch (\Throwable $e) {
             if (isset($pdo) && $pdo->inTransaction()) {
                 $pdo->rollBack();

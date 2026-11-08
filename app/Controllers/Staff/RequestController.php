@@ -8,6 +8,7 @@ use App\Core\Database;
 use App\Core\Request;
 use App\Core\Session;
 use App\Services\RoomTransferService;
+use App\Services\MailService;
 
 /**
  * Controller: Tiếp nhận & Xử lý Yêu cầu / Đơn một cửa của Sinh viên (staff/requests)
@@ -483,6 +484,12 @@ class RequestController extends Controller
         $result = RoomTransferService::approveRequest($maDon, (string)$userId);
 
         if ($result['success']) {
+            // Gửi email thông báo cho sinh viên về kết quả duyệt đơn
+            try {
+                MailService::notifyStudentRequestDecision($maDon, 'Đã duyệt');
+            } catch (\Throwable $e) {
+                error_log('Lỗi gửi email cho sinh viên khi duyệt đơn: ' . $e->getMessage());
+            }
             Session::flash('success', $result['message']);
         } else {
             Session::flash('error', $result['message']);
@@ -541,6 +548,12 @@ class RequestController extends Controller
         $result = RoomTransferService::rejectRequest($maDon, $lyDo);
 
         if ($result['success']) {
+            // Gửi email thông báo cho sinh viên về việc từ chối đơn
+            try {
+                MailService::notifyStudentRequestDecision($maDon, 'Từ chối', $lyDo);
+            } catch (\Throwable $e) {
+                error_log('Lỗi gửi email cho sinh viên khi từ chối đơn: ' . $e->getMessage());
+            }
             Session::flash('success', $result['message']);
         } else {
             Session::flash('error', $result['message']);

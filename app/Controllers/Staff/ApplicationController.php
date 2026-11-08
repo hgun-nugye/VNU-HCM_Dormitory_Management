@@ -8,6 +8,7 @@ use App\Core\Database;
 use App\Core\Request;
 use App\Core\Session;
 use App\Services\AutoReleaseService;
+use App\Services\MailService;
 
 /**
  * Controller: Quản lý Hồ sơ Đăng ký nội trú & Xét duyệt 72h
@@ -556,7 +557,13 @@ class ApplicationController extends Controller
 
         if ($result['success']) {
             $hanChotFmt = date('d/m/Y H:i', strtotime($result['hanChotThanhToan']));
-            Session::flash('success', "Đã phê duyệt giữ chỗ 72h cho hồ sơ {$maHoSo}. Hạn chót thanh toán: {$hanChotFmt}. Hóa đơn lệ phí đã được tự động khởi tạo.");
+            // Gửi email thông báo cho sinh viên về hạn thanh toán giữ chỗ 72h
+            try {
+                MailService::notifyStudentApplicationApproved($maHoSo);
+            } catch (\Throwable $e) {
+                error_log('Lỗi gửi email cho sinh viên khi duyệt hồ sơ: ' . $e->getMessage());
+            }
+            Session::flash('success', "Đã phê duyệt giữ chỗ 72h cho hồ sơ {$maHoSo}. Hạn chót thanh toán: {$hanChotFmt}. Hóa đơn lệ phí đã được tự động khởi tạo và thông báo đến email sinh viên.");
         } else {
             Session::flash('error', $result['message'] ?? 'Phê duyệt hồ sơ thất bại.');
         }
@@ -590,6 +597,12 @@ class ApplicationController extends Controller
         $result = AutoReleaseService::rejectApplication($maHoSo, $userId, $lyDo);
 
         if ($result['success']) {
+            // Gửi email thông báo cho sinh viên về lý do từ chối
+            try {
+                MailService::notifyStudentApplicationRejected($maHoSo, $lyDo);
+            } catch (\Throwable $e) {
+                error_log('Lỗi gửi email cho sinh viên khi từ chối hồ sơ: ' . $e->getMessage());
+            }
             Session::flash('success', $result['message']);
         } else {
             Session::flash('error', $result['message'] ?? 'Từ chối hồ sơ thất bại.');
